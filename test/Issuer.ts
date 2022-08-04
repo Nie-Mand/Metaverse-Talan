@@ -1,60 +1,44 @@
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { Signer } from "ethers"
-import { Identity, IdentityIssuer } from "../typechain-types"
+import { IdentityIssuer } from "../typechain-types"
 
 describe("Identity Issuer works", () => {
-  const issuedName = "Adam"
-  let identity: Identity
-  let dao: Signer, adam: Signer, bob: Signer
-  let daoAddress: string, adamAddress: string
+  let identityIssuer: IdentityIssuer
+  let adam: Signer, bob: Signer
 
   before(async () => {
     const signers = await ethers.getSigners()
-    dao = signers[0]
-    adam = signers[1]
-    bob = signers[2]
-    daoAddress = await dao.getAddress()
-    adamAddress = await adam.getAddress()
-    const contract = await ethers.getContractFactory("Identity", dao)
-    identity = await contract.deploy(adamAddress, issuedName)
-    await identity.deployed()
+    adam = signers[0]
+    bob = signers[1]
+    const contract = await ethers.getContractFactory("IdentityIssuer")
+    identityIssuer = await contract.deploy()
+    await identityIssuer.deployed()
   })
 
-  it("issue an identity to users", () => {})
-  it("should be co-owned by the creator and the identified", async () => {
-    const [issuer] = await identity.functions.issuer()
-    const [identified] = await identity.functions.identified()
+  it("create an identity to new users", async () => {
+    expect(
+      identityIssuer.connect(adam).functions.signup({
+        name: "Adam",
+      })
+    ).to.be.fulfilled
 
-    expect(issuer).to.equal(daoAddress)
-    expect(identified).to.equal(adamAddress)
+    expect(
+      identityIssuer.connect(adam).functions.signup({
+        name: "Paul",
+      })
+    ).to.be.revertedWith("You are already registered")
+
+    const [adamsIdentity] = await identityIssuer.connect(adam).functions.login()
+    const contract = await ethers.getContractAt("Identity", adamsIdentity)
+    const [name] = await contract.functions.getName()
+    expect(name).to.equal("Adam")
   })
 
-  it("should has the name that was issued to it", async () => {
-    const [name] = await identity.functions.getName()
-    expect(name).to.equal(issuedName)
-  })
-
-  it("only the issued can change the name", async () => {
-    await expect(identity.connect(adam).functions.setName("Peter")).to.be
-      .fulfilled
-
-    await expect(
-      identity.connect(dao).functions.setName("Peter")
-    ).to.be.revertedWith("Only the identifier can perform this action")
-  })
-
-  it("accepts metadata", async () => {
-    const email = "adam@gmail.com"
-    await expect(identity.connect(adam).functions.setMetadata("Email", email))
-      .to.be.fulfilled
-
-    const [_email] = await identity.connect(dao).functions.getMetadata("Email")
-
-    await expect(_email).to.equal(email)
-
-    await expect(
-      identity.connect(dao).functions.setMetadata("Email", email)
-    ).to.be.revertedWith("Only the identifier can perform this action")
+  it("allow login for only identified users", () => {
+    expect(identityIssuer.connect(adam).functions.login()).to.be.fulfilled
+    expect(identityIssuer.connect(bob).functions.login()).to.be.revertedWith(
+      "You do not have an identity"
+    )
   })
 })

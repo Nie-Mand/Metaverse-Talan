@@ -6,14 +6,13 @@ import { Identity } from "../typechain-types"
 describe("Identity works", () => {
   const issuedName = "Adam"
   let identity: Identity
-  let dao: Signer, adam: Signer, bob: Signer
+  let dao: Signer, adam: Signer
   let daoAddress: string, adamAddress: string
 
   before(async () => {
     const signers = await ethers.getSigners()
     dao = signers[0]
     adam = signers[1]
-    bob = signers[2]
     daoAddress = await dao.getAddress()
     adamAddress = await adam.getAddress()
     const contract = await ethers.getContractFactory("Identity", dao)
