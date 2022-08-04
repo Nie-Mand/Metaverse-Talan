@@ -22,6 +22,3 @@ cache
 artifacts
 
 
-
-# I thought we can just ignore this one
-typechain-types
