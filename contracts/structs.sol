@@ -5,4 +5,8 @@ library Structs {
     struct Counter {
         uint8 count;
     }
+
+    struct UserProfile {
+        string name;
+    }
 }

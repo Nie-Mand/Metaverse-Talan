@@ -5,6 +5,7 @@ import "dotenv/config"
 const config: HardhatUserConfig = {
   solidity: "0.8.9",
   networks: {
+    hardhat: {},
     matic: {
       url: "https://rpc-mumbai.maticvigil.com",
       accounts: [process.env.MUMBAI_PRIVATE_KEY || ""],

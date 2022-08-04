@@ -3,6 +3,7 @@
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",
+    "deploy:identity": "hardhat run scripts/identity.ts --network localhost",
     "deploy:counter": "hardhat run scripts/counter/index.ts --network localhost",
     "deploy:counter:mumbai": "hardhat run scripts/counter/index.ts --network matic",
     "node": "hardhat node"
