@@ -1,0 +1,14 @@
+{
+  "name": "hardhat-project",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:counter": "hardhat run scripts/counter/index.ts --network localhost",
+    "node": "hardhat node"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^1.0.2",
+    "ethers": "^5.6.9",
+    "hardhat": "^2.10.1"
+  }
+}
