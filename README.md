@@ -1,13 +1,9 @@
-# Sample Hardhat Project
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
+# Hello world
 
-Try running some of the following tasks:
-
-```shell
-npx hardhat help
-npx hardhat test
-GAS_REPORT=true npx hardhat test
-npx hardhat node
-npx hardhat run scripts/deploy.ts
+```
+npm run node # run a local node server
+npm run compile # compile the contract
+npm run test # run tests
+npm run deploy:counter # deploy the counter contract to localhost
 ```
