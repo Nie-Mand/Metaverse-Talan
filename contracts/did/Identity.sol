@@ -2,8 +2,9 @@
 pragma solidity ^0.8.9;
 
 import "./CoOwnable.sol";
+import "./interfaces.sol";
 
-contract Identity is CoOwnable {
+contract Identity is CoOwnable, IIdentity {
     string private name;
     mapping(string => string) private metadata;
 

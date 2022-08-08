@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-abstract contract CoOwnable {
+import "./interfaces.sol";
+
+abstract contract CoOwnable is ICoOwnable {
     address private _issuer;
     address private _identified;
 
