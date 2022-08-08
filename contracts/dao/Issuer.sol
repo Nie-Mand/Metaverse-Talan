@@ -4,6 +4,7 @@ pragma solidity ^0.8.9;
 import "../did/Identity.sol";
 import "../structs.sol";
 
+// emit signup event
 contract IdentityIssuer {
     mapping(address => address) identities;
 

@@ -11,5 +11,7 @@ export default async function main() {
     },
   })
 
+  console.log(counter.tx.address)
+
   return counter
 }
