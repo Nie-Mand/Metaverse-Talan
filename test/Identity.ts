@@ -39,7 +39,7 @@ describe("Identity works", () => {
 
     await expect(
       identity.connect(dao).functions.setName("Peter")
-    ).to.be.revertedWith("Only the identifier can perform this action")
+    ).to.be.revertedWithCustomError(identity, "CoOwnable__NotIdentifier")
   })
 
   it("accepts metadata", async () => {
@@ -53,6 +53,6 @@ describe("Identity works", () => {
 
     await expect(
       identity.connect(dao).functions.setMetadata("Email", email)
-    ).to.be.revertedWith("Only the identifier can perform this action")
+    ).to.be.revertedWithCustomError(identity, "CoOwnable__NotIdentifier")
   })
 })

@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-import "./interfaces.sol";
+error CoOwnable__NotIssuer();
+error CoOwnable__NotIdentifier();
+error CoOwnable__NotOwner();
+error CoOwnable__InvalidAddress();
 
-abstract contract CoOwnable is ICoOwnable {
+abstract contract CoOwnable {
     address private _issuer;
     address private _identified;
 
@@ -12,38 +15,7 @@ abstract contract CoOwnable is ICoOwnable {
         address indexed newIssuer
     );
 
-    modifier validAddress(address _address, string memory _errorMessage) {
-        require(_address != address(0), _errorMessage);
-        _;
-    }
-
-    modifier onlyIssuer() {
-        require(
-            msg.sender == _issuer,
-            "Only the issuer can perform this action"
-        );
-        _;
-    }
-
-    modifier onlyIdentifier() {
-        require(
-            msg.sender == _identified,
-            "Only the identifier can perform this action"
-        );
-        _;
-    }
-
-    modifier onlyOwners() {
-        require(
-            msg.sender == _issuer || msg.sender == _identified,
-            "Only the issuer or identifier can perform this action"
-        );
-        _;
-    }
-
-    constructor(address _identifiedAddress)
-        validAddress(_identifiedAddress, "Identified address is not valid")
-    {
+    constructor(address _identifiedAddress) validAddress(_identifiedAddress) {
         _issuer = msg.sender;
         _identified = _identifiedAddress;
         emit IssuerTransferred(address(0), _issuer);
@@ -68,9 +40,30 @@ abstract contract CoOwnable is ICoOwnable {
     function transferIssue(address _newIssuer)
         public
         onlyIssuer
-        validAddress(_newIssuer, "New issuer address is not valid")
+        validAddress(_newIssuer)
     {
         emit IssuerTransferred(_issuer, _newIssuer);
         _issuer = _newIssuer;
+    }
+
+    modifier validAddress(address _address) {
+        if (_address == address(0)) revert CoOwnable__InvalidAddress();
+        _;
+    }
+
+    modifier onlyIssuer() {
+        if (msg.sender != _issuer) revert CoOwnable__NotIssuer();
+        _;
+    }
+
+    modifier onlyIdentifier() {
+        if (msg.sender != _identified) revert CoOwnable__NotIdentifier();
+        _;
+    }
+
+    modifier onlyOwners() {
+        if (msg.sender != _issuer && msg.sender != _identified)
+            revert CoOwnable__NotOwner();
+        _;
     }
 }
