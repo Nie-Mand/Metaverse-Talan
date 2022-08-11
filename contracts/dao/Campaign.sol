@@ -7,8 +7,9 @@ import "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";
 import "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
 import "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol";
 import "@openzeppelin/contracts/governance/extensions/GovernorSettings.sol";
+import "./PrestigeToken.sol";
 
-contract GovernorContract is
+contract Campaign is
     Governor,
     GovernorSettings,
     GovernorCountingSimple,
@@ -16,14 +17,21 @@ contract GovernorContract is
     GovernorVotesQuorumFraction,
     GovernorTimelockControl
 {
+    uint256 public target;
+    string public reason;
+
+    event UserJoined(address indexed _user);
+
     constructor(
         IVotes _token,
         TimelockController _timelock,
         uint256 _quorumPercentage,
         uint256 _votingPeriod,
-        uint256 _votingDelay
+        uint256 _votingDelay,
+        uint256 _target,
+        string memory _reason
     )
-        Governor("GovernorContract")
+        Governor("CampaignContract")
         GovernorSettings(
             _votingDelay, /* 1 block */ // votind delay
             _votingPeriod, // 45818, /* 1 week */ // voting period
@@ -32,7 +40,35 @@ contract GovernorContract is
         GovernorVotes(_token)
         GovernorVotesQuorumFraction(_quorumPercentage)
         GovernorTimelockControl(_timelock)
-    {}
+    {
+        target = _target;
+        reason = _reason;
+    }
+
+    function buyEquity(uint256 _hold) public payable {
+        IPrestigeToken token = IPrestigeToken(address(token));
+        uint256 tokenPrice = token.tokenPrice();
+        uint256 maximumTokenToBuy = token.maximumTokenToBuy();
+        require(
+            _hold <= maximumTokenToBuy,
+            "You have exceeded the maximum amount of tokens you can buy"
+        );
+        require(msg.value == tokenPrice * _hold, "Invalid amount");
+        _buyEquity(msg.sender, _hold);
+        emit UserJoined(msg.sender);
+    }
+
+    function _buyEquity(address _joiner, uint256 _hold) private {
+        IPrestigeToken token = IPrestigeToken(address(token));
+        token.transfer(_joiner, _hold);
+    }
+
+    // function join(uint256 _hold) public payable {
+    //     PrestigeToken token = PrestigeToken(address(token));
+    //     uint256 tokenPrice = token.tokenPrice();
+    //     require(msg.value == tokenPrice * _hold);
+    //     token.transfer(msg.sender, tokenPrice * _hold);
+    // }
 
     function votingDelay()
         public
