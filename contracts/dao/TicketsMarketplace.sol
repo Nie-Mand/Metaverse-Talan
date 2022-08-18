@@ -34,6 +34,8 @@ contract TicketsMarketplace is Ownable, ERC721URIStorage {
         bool sold
     );
 
+    event TicketsCreated(string matchId, uint256 number, uint256 price);
+
     constructor() ERC721("Tickets Metaverse Tokens", "TICKET") Ownable() {}
 
     function createTickets(
@@ -50,6 +52,7 @@ contract TicketsMarketplace is Ownable, ERC721URIStorage {
             _setTokenURI(newTokenId, tokenURI);
             createMarketItem(newTokenId, _gameWillfinishAfter, price, matchId);
         }
+        emit TicketsCreated(matchId, number, price);
     }
 
     function createMarketItem(

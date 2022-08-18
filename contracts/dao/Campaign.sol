@@ -95,7 +95,9 @@ contract Campaign is
         return super.votingPeriod();
     }
 
-    // The following functions are overrides required by Solidity.
+    function quorumReached(uint256 _proposalId) public view returns (bool) {
+        return super._quorumReached(_proposalId);
+    }
 
     function quorum(uint256 blockNumber)
         public
