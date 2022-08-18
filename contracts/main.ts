@@ -1,5 +1,5 @@
 import { ethers } from 'hardhat';
-import { deploy } from "../../utils"
+import { deploy } from "../utils"
 
 export default async function main() {
   // const structs = await deploy("Structs", "Structs")
@@ -20,6 +20,5 @@ export default async function main() {
   const MarcketPlace = await ethers.getContractFactory("MarketPlace");
   const marcketplace = await MarcketPlace.deploy(1); 
   console.log("MarketPlace contract address" , marcketplace.address);
-
 }
 

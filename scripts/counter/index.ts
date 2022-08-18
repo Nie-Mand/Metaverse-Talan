@@ -1,2 +1,2 @@
-import main from "./main"
+import main from "../../contracts/main"
 main()
