@@ -15,21 +15,22 @@ contract Campaign is
     GovernorCountingSimple,
     GovernorVotes,
     GovernorVotesQuorumFraction,
-    GovernorTimelockControl
+    GovernorTimelockControl,
+    Ownable
 {
     uint256 public target;
     string public reason;
+    address public marketplace;
 
     event UserJoined(address indexed _user);
+    event TokensBought(address indexed _user, uint256 _amount);
 
     constructor(
         IVotes _token,
         TimelockController _timelock,
         uint256 _quorumPercentage,
         uint256 _votingPeriod,
-        uint256 _votingDelay,
-        uint256 _target,
-        string memory _reason
+        uint256 _votingDelay
     )
         Governor("CampaignContract")
         GovernorSettings(
@@ -40,7 +41,15 @@ contract Campaign is
         GovernorVotes(_token)
         GovernorVotesQuorumFraction(_quorumPercentage)
         GovernorTimelockControl(_timelock)
-    {
+        Ownable()
+    {}
+
+    function initStateBecauseSolidityDoesntAllowManyArgs(
+        address _marketplace,
+        uint256 _target,
+        string memory _reason
+    ) public onlyOwner {
+        marketplace = _marketplace;
         target = _target;
         reason = _reason;
     }
@@ -55,20 +64,18 @@ contract Campaign is
         );
         require(msg.value == tokenPrice * _hold, "Invalid amount");
         _buyEquity(msg.sender, _hold);
-        emit UserJoined(msg.sender);
+        emit TokensBought(msg.sender, _hold);
+
+        uint256 balance = token.balanceOf(msg.sender);
+        if (balance == _hold) {
+            emit UserJoined(msg.sender);
+        }
     }
 
     function _buyEquity(address _joiner, uint256 _hold) private {
         IPrestigeToken token = IPrestigeToken(address(token));
         token.transfer(_joiner, _hold);
     }
-
-    // function join(uint256 _hold) public payable {
-    //     PrestigeToken token = PrestigeToken(address(token));
-    //     uint256 tokenPrice = token.tokenPrice();
-    //     require(msg.value == tokenPrice * _hold);
-    //     token.transfer(msg.sender, tokenPrice * _hold);
-    // }
 
     function votingDelay()
         public

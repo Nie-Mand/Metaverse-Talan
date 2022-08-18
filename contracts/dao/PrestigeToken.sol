@@ -54,4 +54,6 @@ abstract contract IPrestigeToken {
     function maximumTokenToBuy() public virtual returns (uint256);
 
     function transfer(address to, uint256 amount) public virtual returns (bool);
+
+    function balanceOf(address account) public view virtual returns (uint256);
 }

@@ -1,7 +1,24 @@
 import { expect } from "chai"
-import { ethers } from "hardhat"
+import { ethers, network } from "hardhat"
 import { Signer } from "ethers"
 import { Campaign, PrestigeToken } from "../typechain-types"
+
+async function nextBlock(n: number = 1) {
+  while (n--) {
+    await network.provider.request({
+      method: "evm_mine",
+      params: [],
+    })
+  }
+}
+
+function nextTime() {
+  return network.provider.send("evm_increaseTime", [1])
+}
+
+function currentBlock() {
+  return ethers.provider.getBlockNumber()
+}
 
 describe("Dao works", () => {
   let john: Signer, bob: Signer, david: Signer
@@ -26,15 +43,21 @@ describe("Dao works", () => {
       .then(_ => _.deployed())
       .then(_ => _.address)
 
+    const _marketplace = await ethers
+      .getContractFactory("TicketsMarketplaceFactory")
+      .then(_ => _.deploy())
+      .then(_ => _.deployed())
+      .then(_ => _.address)
+
     const campaignFactory = await ethers
       .getContractFactory("CampaignFactory")
-      .then(_ => _.deploy(_token, _timeLock))
+      .then(_ => _.deploy(_token, _timeLock, _marketplace))
       .then(_ => _.deployed())
 
     const campaignTx = await campaignFactory.createCampaign(
       "We need a job",
-      1,
-      1,
+      2,
+      3,
       69,
       ethers.utils.parseEther("0.000001"),
       666,
@@ -78,5 +101,72 @@ describe("Dao works", () => {
       .then(() => true)
       .catch(() => false)
     expect(check).to.equal(false)
+  })
+
+  it("Handles Proposals", async () => {
+    const sample = await ethers
+      .getContractFactory("SampleContract")
+      .then(_ => _.deploy())
+      .then(_ => _.deployed())
+
+    const proposedFunction = sample.interface.encodeFunctionData("set", [69])
+
+    const proposalTx = await campaign.propose(
+      [sample.address],
+      [0],
+      [proposedFunction],
+      "Let's change the value into 69"
+    )
+
+    const receipt = await proposalTx.wait(1)
+
+    const proposalId = receipt.events![0].args![0]
+
+    let status = await campaign.state(proposalId)
+
+    console.log("status", status)
+
+    const tokenPrice = await token.tokenPrice()
+
+    await campaign.connect(david).buyEquity(20, {
+      value: ethers.BigNumber.from(String(tokenPrice.toNumber() * 20)),
+    })
+
+    console.log(await token.balanceOf(await david.getAddress()))
+    await nextBlock(1)
+
+    const tx = await campaign.connect(david).castVote(proposalId, 1) // 1 for yes, 0 for no ?
+
+    await tx.wait()
+
+    status = await campaign.state(proposalId)
+
+    console.log("status", status)
+
+    await nextBlock(3)
+
+    status = await campaign.state(proposalId)
+
+    console.log("status", status)
+
+    const votes = await campaign.getVotes(
+      await david.getAddress(),
+      (await currentBlock()) - 1
+    )
+
+    console.log("votes", votes)
+
+    // current blockNumber
+
+    // proposalThreshold
+
+    // status = await campaign.state(proposalId)
+
+    // console.log("status", status)
+
+    // await sample.set(69)
+
+    // v = await sample.v()
+    // expect(v).to.equal(69)
   })
 })

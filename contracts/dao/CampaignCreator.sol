@@ -7,25 +7,35 @@ import "./PrestigeToken.sol";
 import "./PrestigeTokenFactory.sol";
 import "./TimeLock.sol";
 import "./TimeLockFactory.sol";
+import "./TicketsMarketplaceFactory.sol";
 
 contract CampaignFactory is Ownable {
     address public tokenFactory;
     address public timeLockFactory;
+    address public ticketsMarketplaceFactory;
+    uint256 public campainCreationFee = 0.001 ether;
 
     mapping(address => address) public campaignCreators;
 
-    constructor(address _tokenFactory, address _timeLockFactory) {
+    event CampainCreated(
+        address indexed _creator,
+        address indexed _campaign,
+        string _reason
+    );
+
+    constructor(
+        address _tokenFactory,
+        address _timeLockFactory,
+        address _ticketsMarketplaceFactory
+    ) {
         tokenFactory = _tokenFactory;
         timeLockFactory = _timeLockFactory;
+        ticketsMarketplaceFactory = _ticketsMarketplaceFactory;
     }
-
-    uint256 campainCreationFee = 0.001 ether;
 
     function setCampainCreationFee(uint256 _newFee) public onlyOwner {
         campainCreationFee = _newFee;
     }
-
-    event CampainCreated(address indexed _creator, address indexed _campaign);
 
     function createCampaign(
         string memory _reason,
@@ -43,7 +53,12 @@ contract CampaignFactory is Ownable {
             "Invalid quorum percentage"
         );
         require(_tokenPrice > 0, "Invalid token price");
-        require(msg.value == campainCreationFee, "Invalid amount");
+        require(_target > 0, "Invalid target");
+        require(_maxTokensToBuy > 0, "Invalid max tokens to buy");
+        require(
+            msg.value >= campainCreationFee,
+            "You don't have enough ether to create a campaign"
+        );
 
         _createCampaign(
             _tokenPrice,
@@ -65,13 +80,12 @@ contract CampaignFactory is Ownable {
         string memory _reason,
         uint256 _target
     ) private {
-        PrestigeTokenFactory _tokenFactory = PrestigeTokenFactory(tokenFactory);
-        _tokenFactory.create(_tokenPrice, _maxTokensToBuy);
-        address token = _tokenFactory.tokens(address(this));
-
-        TimeLockFactory _timeLockFactory = TimeLockFactory(timeLockFactory);
-        _timeLockFactory.create(_delay);
-        address timelock = _timeLockFactory.addresses(address(this));
+        (
+            address token,
+            address timelock,
+            address ticketsMarketplace,
+            PrestigeTokenFactory _tokenFactory
+        ) = _beforeCreateCampaign(_tokenPrice, _maxTokensToBuy, _delay);
 
         PrestigeToken finalToken = PrestigeToken(token);
         TimeLock finalTimelock = TimeLock(payable(timelock));
@@ -81,12 +95,63 @@ contract CampaignFactory is Ownable {
             finalTimelock,
             _quorumPercentage,
             _period,
-            _delay,
+            _delay
+        );
+
+        _afterCreateCampaign(
+            campaign,
+            ticketsMarketplace,
+            _reason,
+            _target,
+            _tokenFactory
+        );
+        emit CampainCreated(msg.sender, address(campaign), _reason);
+    }
+
+    function _beforeCreateCampaign(
+        uint256 _tokenPrice,
+        uint256 _maxTokensToBuy,
+        uint256 _delay
+    )
+        private
+        returns (
+            address,
+            address,
+            address,
+            PrestigeTokenFactory
+        )
+    {
+        PrestigeTokenFactory _tokenFactory = PrestigeTokenFactory(tokenFactory);
+        _tokenFactory.create(_tokenPrice, _maxTokensToBuy);
+        address token = _tokenFactory.tokens(address(this));
+
+        TimeLockFactory _timeLockFactory = TimeLockFactory(timeLockFactory);
+        _timeLockFactory.create(_delay);
+        address timelock = _timeLockFactory.addresses(address(this));
+
+        TicketsMarketplaceFactory _ticketsMarketplaceFactory = TicketsMarketplaceFactory(
+                ticketsMarketplaceFactory
+            );
+        _ticketsMarketplaceFactory.create();
+        address ticketsMarketplace = _ticketsMarketplaceFactory.marketplaces(
+            address(this)
+        );
+
+        return (token, timelock, ticketsMarketplace, _tokenFactory);
+    }
+
+    function _afterCreateCampaign(
+        Campaign _campaign,
+        address _ticketsMarketplace,
+        string memory _reason,
+        uint256 _target,
+        PrestigeTokenFactory _tokenFactory
+    ) private {
+        _campaign.initStateBecauseSolidityDoesntAllowManyArgs(
+            _ticketsMarketplace,
             _target,
             _reason
         );
-        _tokenFactory.transferAllTokens(address(campaign));
-        // finalToken.transfer(address(campaign), finalToken.s_maxSupply());
-        emit CampainCreated(msg.sender, address(campaign));
+        _tokenFactory.transferAllTokens(address(_campaign));
     }
 }

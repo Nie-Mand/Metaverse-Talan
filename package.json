@@ -7,6 +7,7 @@
     "deploy:counter:rinkeby": "hardhat run scripts/counter/index.ts --network rinkeby",
     "deploy:counter": "hardhat run scripts/counter/index.ts --network localhost",
     "deploy:counter:mumbai": "hardhat run scripts/counter/index.ts --network matic",
+    "deploy:dao:mumbai": "hardhat run scripts/dao.ts --network matic",
     "node": "hardhat node"
   },
   "devDependencies": {
