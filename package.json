@@ -13,6 +13,16 @@
     "hardhat": "^2.10.1"
   },
   "dependencies": {
-    "dotenv": "^16.0.1"
+    "@openzeppelin/contracts": "^4.7.2",
+    "bootstrap": "^5.2.0",
+    "buffer": "^6.0.3",
+    "dotenv": "^16.0.1",
+    "events": "^3.3.0",
+    "hardhat-migration": "^1.0.2",
+    "ipfs-http-client": "^57.0.3",
+    "process": "^0.11.10",
+    "react-bootstrap": "^2.5.0",
+    "react-router-dom": "^6.3.0",
+    "util": "^0.12.4"
   }
 }
